@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Pulso — información financiera independiente sobre mercados, economía y empresas.">
+  <meta name="google-adsense-account" content="ca-pub-1236718700873712">
+  <title>Pulso — Finanzas sin ruido</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1236718700873712"
+     crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body id="inicio">
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Pulso inicio">
+      <span class="brand-mark">P</span>
+      <span>PULSO</span>
+    </a>
+    <nav class="main-nav" id="mainNavigation" aria-label="Navegación principal">
+      <a class="active" href="#">Inicio</a>
+      <a href="#mercados" data-nav-category="markets">Mercados</a>
+      <a href="#mercados" data-nav-category="economy">Economía</a>
+      <a href="#mercados" data-nav-category="business">Empresas</a>
+      <a href="#mercados" data-nav-category="technology">Tecnología</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-button" id="searchButton" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
+      </button>
+      <button class="subscribe-button">Suscribirme</button>
+      <button class="menu-button" id="menuButton" aria-label="Abrir menú" aria-controls="mainNavigation" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <section class="market-strip" aria-label="Filtros de noticias">
+    <div class="ticker news-filters" role="toolbar" aria-label="Filtrar noticias">
+      <button type="button" class="news-filter active" data-category="all" aria-pressed="true">Todas</button>
+      <button type="button" class="news-filter" data-category="economy" aria-pressed="false">Economía y finanzas</button>
+      <button type="button" class="news-filter" data-category="markets" aria-pressed="false">Mercados y trading</button>
+      <button type="button" class="news-filter" data-category="business" aria-pressed="false">Empresas</button>
+      <button type="button" class="news-filter" data-category="technology" aria-pressed="false">Tecnología financiera</button>
+      <span class="feed-status" id="feedStatus" role="status" aria-live="polite">Cargando noticias reales…</span>
+    </div>
+  </section>
+
+  <main>
+    <section class="hero-grid" id="newsHero" aria-busy="true" aria-label="Titulares destacados">
+      <div class="news-loading" role="status">Cargando titulares reales…</div>
+    </section>
+
+    <section class="section-header" id="mercados">
+      <div>
+        <p class="eyebrow">Últimas noticias</p>
+        <h2>Mercados en movimiento</h2>
+      </div>
+      <a href="#newsGrid">Ver todas <span>→</span></a>
+    </section>
+
+    <section class="news-grid" id="newsGrid" aria-live="polite" aria-busy="true"></section>
+
+    <section class="briefing">
+      <div class="briefing-copy">
+        <p class="eyebrow">The Brief</p>
+        <h2>Lo esencial del día,<br>antes de abrir los mercados.</h2>
+        <p>Consulta los titulares que más pueden mover los mercados y las decisiones de financiación.</p>
+        <form class="newsletter" id="newsletterForm">
+          <label class="sr-only" for="email">Correo electrónico</label>
+          <input id="email" type="email" placeholder="Tu correo electrónico" required>
+          <button type="submit">Suscribirse</button>
+        </form>
+        <p class="newsletter-status" id="newsletterStatus" role="status" aria-live="polite"></p>
+        <small>Gratis. Sin spam. Puedes darte de baja cuando quieras.</small>
+      </div>
+      <div class="briefing-visual">
+        <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1000&q=85" alt="Interior moderno de una oficina financiera">
+        <div class="edition-card">
+          <span>Edición de hoy</span>
+          <strong id="editionDate"></strong>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Buscar en Pulso" aria-hidden="true">
+    <button class="close-search" id="closeSearch" aria-label="Cerrar búsqueda">×</button>
+    <form>
+      <label for="searchInput">Buscar en Pulso</label>
+      <input id="searchInput" type="search" placeholder="Mercados, empresas, economía...">
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
