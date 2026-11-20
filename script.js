@@ -63,10 +63,15 @@ newsletterForm.addEventListener("submit", (event) => {
 const newsHero = document.getElementById("newsHero");
 const newsGrid = document.getElementById("newsGrid");
 const feedStatus = document.getElementById("feedStatus");
+const articleView = document.getElementById("articleView");
+const articleContent = document.getElementById("articleContent");
+const closeArticle = document.getElementById("closeArticle");
 const filterButtons = Array.from(document.querySelectorAll(".news-filter"));
 let newsItems = [];
+let visibleNewsItems = [];
 let activeCategory = "all";
 let latestNewsRequest = 0;
+let articlePreviousFocus = null;
 
 const categoryNames = {
   all: "Todas",
@@ -75,6 +80,21 @@ const categoryNames = {
   business: "Empresas",
   technology: "Tecnología financiera"
 };
+
+const categoryImages = {
+  economy: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1200&q=85",
+  markets: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=1200&q=85",
+  business: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
+  technology: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=85"
+};
+
+function imageFor(item) {
+  return item.image || fallbackImageFor(item);
+}
+
+function fallbackImageFor(item) {
+  return categoryImages[item.category] || categoryImages.economy;
+}
 
 function escapeHtml(value) {
   return String(value)
@@ -104,40 +124,49 @@ function categoryLabel(item) {
   return "Finanzas";
 }
 
-function heroTemplate(item) {
+function heroTemplate(item, index) {
   if (!item) return '<div class="news-empty">No hay titulares disponibles para esta selección.</div>';
   return `
     <article class="lead-story">
+      <button class="lead-image story-image" type="button" data-article-index="${index}" aria-label="Abrir noticia: ${escapeHtml(item.title)}">
+        <img src="${escapeHtml(imageFor(item))}" data-fallback="${escapeHtml(fallbackImageFor(item))}" alt="Imagen relacionada con ${escapeHtml(item.title)}" fetchpriority="high">
+      </button>
       <div class="lead-content">
         <div class="meta"><span>${escapeHtml(categoryLabel(item))}</span><time datetime="${escapeHtml(item.published)}">${escapeHtml(formatDate(item.published))}</time></div>
         <h1>${escapeHtml(item.title)}</h1>
         ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
         <div class="meta"><span class="news-source">${escapeHtml(item.source || "Fuente original")}</span></div>
-        <a class="read-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Leer en la fuente <span aria-hidden="true">→</span></a>
+        <button class="read-link" type="button" data-article-index="${index}">Leer noticia <span aria-hidden="true">→</span></button>
       </div>
     </article>
     <aside class="side-stories" aria-label="Más titulares"></aside>
   `;
 }
 
-function sideTemplate(item) {
+function sideTemplate(item, index) {
   return `
     <article class="side-story">
+      <button class="side-image story-image" type="button" data-article-index="${index}" aria-label="Abrir noticia: ${escapeHtml(item.title)}">
+        <img src="${escapeHtml(imageFor(item))}" data-fallback="${escapeHtml(fallbackImageFor(item))}" alt="Imagen relacionada con ${escapeHtml(item.title)}" loading="lazy">
+      </button>
       <div>
         <div class="meta"><span>${escapeHtml(categoryLabel(item))}</span><time datetime="${escapeHtml(item.published)}">${escapeHtml(formatDate(item.published))}</time></div>
-        <h2><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a></h2>
+        <h2><button class="story-title" type="button" data-article-index="${index}">${escapeHtml(item.title)}</button></h2>
         <div class="meta"><span class="news-source">${escapeHtml(item.source || "Fuente original")}</span></div>
       </div>
     </article>
   `;
 }
 
-function cardTemplate(item) {
+function cardTemplate(item, index) {
   return `
     <article class="news-card">
+      <button class="card-image story-image" type="button" data-article-index="${index}" aria-label="Abrir noticia: ${escapeHtml(item.title)}">
+        <img src="${escapeHtml(imageFor(item))}" data-fallback="${escapeHtml(fallbackImageFor(item))}" alt="Imagen relacionada con ${escapeHtml(item.title)}" loading="lazy">
+      </button>
       <div class="card-body">
         <div class="meta"><span>${escapeHtml(categoryLabel(item))}</span><time datetime="${escapeHtml(item.published)}">${escapeHtml(formatDate(item.published))}</time></div>
-        <h3><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a></h3>
+        <h3><button class="story-title" type="button" data-article-index="${index}">${escapeHtml(item.title)}</button></h3>
         ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
         <div class="meta"><span class="news-source">${escapeHtml(item.source || "Fuente original")}</span></div>
       </div>
@@ -151,6 +180,7 @@ function renderNews(query = "") {
     (activeCategory === "all" || item.category === activeCategory) &&
     (!normalizedQuery || `${item.title} ${item.description} ${item.source}`.toLowerCase().includes(normalizedQuery))
   );
+  visibleNewsItems = visible;
 
   if (!visible.length) {
     newsHero.innerHTML = '<div class="news-empty">No hay titulares disponibles para esta selección.</div>';
@@ -160,13 +190,68 @@ function renderNews(query = "") {
     return;
   }
 
-  newsHero.innerHTML = heroTemplate(visible[0]);
+  newsHero.innerHTML = heroTemplate(visible[0], 0);
   const side = newsHero.querySelector(".side-stories");
-  if (side) side.innerHTML = visible.slice(1, 4).map(sideTemplate).join("");
-  newsGrid.innerHTML = visible.slice(4).map(cardTemplate).join("");
+  if (side) side.innerHTML = visible.slice(1, 4).map((item, index) => sideTemplate(item, index + 1)).join("");
+  newsGrid.innerHTML = visible.slice(4).map((item, index) => cardTemplate(item, index + 4)).join("");
   newsGrid.setAttribute("aria-busy", "false");
   feedStatus.textContent = `${visible.length} noticias reales · ${categoryNames[activeCategory]}`;
 }
+
+function openArticle(index) {
+  const item = visibleNewsItems[index];
+  if (!item) return;
+  articlePreviousFocus = document.activeElement;
+  articleContent.innerHTML = `
+    <img class="article-image" src="${escapeHtml(imageFor(item))}" data-fallback="${escapeHtml(fallbackImageFor(item))}" alt="Imagen relacionada con ${escapeHtml(item.title)}">
+    <div class="article-body">
+      <div class="meta"><span>${escapeHtml(categoryLabel(item))}</span><time datetime="${escapeHtml(item.published)}">${escapeHtml(formatDate(item.published))}</time></div>
+      <h1 id="articleTitle">${escapeHtml(item.title)}</h1>
+      <p class="article-source">Publicado por ${escapeHtml(item.source || "Fuente original")}</p>
+      <div class="article-copy">${escapeHtml(item.description || "La fuente no proporcionó un resumen adicional para esta noticia.")}</div>
+    </div>
+  `;
+  articleView.classList.add("open");
+  articleView.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  closeArticle.focus();
+}
+
+function closeArticleView() {
+  articleView.classList.remove("open");
+  articleView.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if (articlePreviousFocus) articlePreviousFocus.focus();
+}
+
+function handleStoryClick(event) {
+  const trigger = event.target.closest("[data-article-index]");
+  if (trigger) openArticle(Number(trigger.dataset.articleIndex));
+}
+
+newsHero.addEventListener("click", handleStoryClick);
+newsGrid.addEventListener("click", handleStoryClick);
+closeArticle.addEventListener("click", closeArticleView);
+articleView.addEventListener("click", (event) => {
+  if (event.target === articleView) closeArticleView();
+});
+document.addEventListener("keydown", (event) => {
+  if (!articleView.classList.contains("open")) return;
+  if (event.key === "Escape") {
+    closeArticleView();
+  } else if (event.key === "Tab") {
+    event.preventDefault();
+    closeArticle.focus();
+  }
+});
+
+document.addEventListener("error", (event) => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement)) return;
+  const fallback = image.dataset.fallback;
+  if (!fallback) return;
+  if (image.src !== fallback) image.src = fallback;
+}, true);
 
 async function loadNews(category = "all") {
   const requestId = ++latestNewsRequest;

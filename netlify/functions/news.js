@@ -25,6 +25,18 @@ function stripHtml(value) {
   return decodeXml(String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
 }
 
+function imageFrom(block) {
+  const imageTag = block.match(/<(?:media:thumbnail|media:content|enclosure)\b[^>]*\burl=["']([^"']+)["'][^>]*>/i);
+  const descriptionImage = block.match(/<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i);
+  const candidate = decodeXml((imageTag || descriptionImage || [])[1] || "").trim();
+  try {
+    const imageUrl = new URL(candidate);
+    return imageUrl.protocol === "https:" ? imageUrl.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function inferCategory(title) {
   const text = title.toLowerCase();
   if (/trading|stock|market|bond|share|commodity|forex|bitcoin|crypto|nasdaq|ibex|sp 500/.test(text)) return "markets";
@@ -59,6 +71,7 @@ exports.handler = async (event) => {
       const source = stripHtml(tagValue(block, "source"));
       const description = stripHtml(tagValue(block, "description"));
       const published = tagValue(block, "pubDate");
+      const image = imageFrom(block);
       const parts = title.split(" - ");
       const cleanTitle = parts.length > 1 ? parts.slice(0, -1).join(" - ").trim() : title;
       const cleanSource = source || (parts.length > 1 ? parts.at(-1).trim() : "Google News");
@@ -69,6 +82,7 @@ exports.handler = async (event) => {
         title: cleanTitle,
         description: description && description !== title ? description : "",
         url,
+        image,
         source: cleanSource,
         published,
         category: category === "all" ? inferCategory(cleanTitle) : category
