@@ -520,13 +520,58 @@ main {
   line-height: 1.08;
   letter-spacing: -1.8px;
 }
-.article-source { color: var(--green); font-size: 13px; font-weight: 700; }
+.article-section { margin-top: 30px; }
+.article-section h2 {
+  margin: 0 0 14px;
+  font-family: "Manrope", sans-serif;
+  font-size: 22px;
+  letter-spacing: -.5px;
+}
 .article-copy {
-  margin-top: 20px;
   color: #60646a;
   font-family: Georgia, serif;
   font-size: 18px;
   line-height: 1.7;
+}
+.article-copy p { margin: 0; }
+.article-copy p + p { margin-top: 14px; }
+.article-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0 0;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.article-facts div { min-width: 0; }
+.article-facts dt {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.article-facts dd { margin: 0; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.related-stories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.related-story { padding: 16px; border: 1px solid var(--line); }
+.related-story .meta { flex-wrap: wrap; font-size: 9px; }
+.related-story h3 {
+  margin: 12px 0 8px;
+  font-family: "Manrope", sans-serif;
+  font-size: 17px;
+  line-height: 1.3;
+}
+.related-story > p { color: var(--muted); font-family: Georgia, serif; font-size: 14px; line-height: 1.5; }
+.related-story-link {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .search-overlay {
@@ -653,6 +698,10 @@ input:focus-visible {
   .briefing-copy { padding: 38px 24px; }
   .briefing-copy h2 { font-size: 34px; }
   .briefing-visual { height: 280px; }
+  .article-view { padding: 12px; }
+  .article-image { height: 30vh; min-height: 190px; }
+  .article-facts { grid-template-columns: 1fr; gap: 12px; }
+  .related-stories { grid-template-columns: 1fr; }
   .search-overlay input { font-size: 24px; }
 }
 

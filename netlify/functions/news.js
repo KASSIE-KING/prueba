@@ -25,6 +25,18 @@ function stripHtml(value) {
   return decodeXml(String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
 }
 
+function contentText(value) {
+  return decodeXml(String(value || ""))
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1")
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<br\s*\/?>|<\/(?:p|div|li|h[1-6])\s*>/gi, "\n\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/[ \t]*\n[ \t]*/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function imageFrom(block) {
   const imageTag = block.match(/<(?:media:thumbnail|media:content|enclosure)\b[^>]*\burl=["']([^"']+)["'][^>]*>/i);
   const descriptionImage = block.match(/<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i);
@@ -69,7 +81,8 @@ exports.handler = async (event) => {
       if (!title || !url) continue;
 
       const source = stripHtml(tagValue(block, "source"));
-      const description = stripHtml(tagValue(block, "description"));
+      const description = contentText(tagValue(block, "description"));
+      const cleanDescription = description === title ? "" : description;
       const published = tagValue(block, "pubDate");
       const image = imageFrom(block);
       const parts = title.split(" - ");
@@ -80,7 +93,8 @@ exports.handler = async (event) => {
       seen.add(url);
       items.push({
         title: cleanTitle,
-        description: description && description !== title ? description : "",
+        description: cleanDescription,
+        content: cleanDescription,
         url,
         image,
         source: cleanSource,

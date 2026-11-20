@@ -178,7 +178,7 @@ function renderNews(query = "") {
   const normalizedQuery = query.trim().toLowerCase();
   const visible = newsItems.filter((item) =>
     (activeCategory === "all" || item.category === activeCategory) &&
-    (!normalizedQuery || `${item.title} ${item.description} ${item.source}`.toLowerCase().includes(normalizedQuery))
+    (!normalizedQuery || `${item.title} ${item.description} ${item.content} ${item.source}`.toLowerCase().includes(normalizedQuery))
   );
   visibleNewsItems = visible;
 
@@ -198,17 +198,51 @@ function renderNews(query = "") {
   feedStatus.textContent = `${visible.length} noticias reales · ${categoryNames[activeCategory]}`;
 }
 
+function articleBodyTemplate(item) {
+  const content = item.content || item.description;
+  if (!content) return "<p>La fuente no proporcionó un resumen adicional para esta noticia.</p>";
+  return content.split(/\n{2,}/).filter(Boolean).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
+}
+
+function relatedStoryTemplate(item, index) {
+  return `
+    <article class="related-story">
+      <div class="meta"><span>${escapeHtml(item.source || "Fuente original")}</span><time datetime="${escapeHtml(item.published)}">${escapeHtml(formatDate(item.published))}</time></div>
+      <h3>${escapeHtml(item.title)}</h3>
+      ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
+      <button class="related-story-link" type="button" data-article-index="${index}">Ver noticia <span aria-hidden="true">→</span></button>
+    </article>
+  `;
+}
+
 function openArticle(index) {
   const item = visibleNewsItems[index];
   if (!item) return;
-  articlePreviousFocus = document.activeElement;
+  if (!articleView.classList.contains("open")) articlePreviousFocus = document.activeElement;
+  const relatedStories = visibleNewsItems
+    .map((story, storyIndex) => ({ story, storyIndex }))
+    .filter(({ story, storyIndex }) => storyIndex !== index && story.category === item.category)
+    .slice(0, 3);
   articleContent.innerHTML = `
     <img class="article-image" src="${escapeHtml(imageFor(item))}" data-fallback="${escapeHtml(fallbackImageFor(item))}" alt="Imagen relacionada con ${escapeHtml(item.title)}">
     <div class="article-body">
       <div class="meta"><span>${escapeHtml(categoryLabel(item))}</span><time datetime="${escapeHtml(item.published)}">${escapeHtml(formatDate(item.published))}</time></div>
       <h1 id="articleTitle">${escapeHtml(item.title)}</h1>
-      <p class="article-source">Publicado por ${escapeHtml(item.source || "Fuente original")}</p>
-      <div class="article-copy">${escapeHtml(item.description || "La fuente no proporcionó un resumen adicional para esta noticia.")}</div>
+      <section class="article-section" aria-labelledby="articleDetailsHeading">
+        <h2 id="articleDetailsHeading">Resumen y detalles</h2>
+        <div class="article-copy">${articleBodyTemplate(item)}</div>
+      </section>
+      <dl class="article-facts">
+        <div><dt>Fuente</dt><dd>${escapeHtml(item.source || "Fuente original")}</dd></div>
+        <div><dt>Publicado</dt><dd>${escapeHtml(formatDate(item.published))}</dd></div>
+        <div><dt>Sección</dt><dd>${escapeHtml(categoryLabel(item))}</dd></div>
+      </dl>
+      ${relatedStories.length ? `
+        <section class="article-section related-section" aria-labelledby="relatedHeading">
+          <h2 id="relatedHeading">Más noticias de ${escapeHtml(categoryLabel(item))}</h2>
+          <div class="related-stories">${relatedStories.map(({ story, storyIndex }) => relatedStoryTemplate(story, storyIndex)).join("")}</div>
+        </section>
+      ` : ""}
     </div>
   `;
   articleView.classList.add("open");
@@ -231,6 +265,7 @@ function handleStoryClick(event) {
 
 newsHero.addEventListener("click", handleStoryClick);
 newsGrid.addEventListener("click", handleStoryClick);
+articleContent.addEventListener("click", handleStoryClick);
 closeArticle.addEventListener("click", closeArticleView);
 articleView.addEventListener("click", (event) => {
   if (event.target === articleView) closeArticleView();
